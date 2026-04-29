@@ -16,11 +16,16 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
           check();
         });
       }
+
+      function getActiveDialog() {
+        return document.querySelector("div[role='dialog']") || document.querySelector("div.x1lliihq.x1iyjqo2");
+      }
+
       async function waitForDialogToClose(timeout = 10000) {
         const start = Date.now();
         return new Promise((resolve) => {
           function poll() {
-            const dialog = document.querySelector("div.x1lliihq.x1iyjqo2");
+            const dialog = getActiveDialog();
             if (!dialog) return resolve(true);
             if (Date.now() - start > timeout) return resolve(false);
             setTimeout(poll, 200);
@@ -118,7 +123,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         try {
           following = await clickAndScrape(
             `a[href='/${username}/following/']`,
-            "div.x1lliihq.x1iyjqo2",
+            "div[role='dialog']",
             "a[href^='/'][role='link']"
           );
         } catch (e) {
@@ -127,7 +132,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         try {
           followers = await clickAndScrape(
             `a[href='/${username}/followers/']`,
-            "body > div.x1n2onr6.xzkaem6 > div:nth-child(2) > div > div > div.x9f619.x1n2onr6.x1ja2u2z > div > div.x1uvtmcs.x4k7w5x.x1h91t0o.x1beo9mf.xaigb6o.x12ejxvf.x3igimt.xarpa2k.xedcshv.x1lytzrv.x1t2pt76.x7ja8zs.x1n2onr6.x1qrby5j.x1jfb8zj > div > div > div > div > div.x7r02ix.x15fl9t6.x1yw9sn2.x1evh3fb.x4giqqa.xb88tzc.xw2csxc.x1odjw0f.x5fp0pe > div > div > div.x6nl9eh.x1a5l9x9.x7vuprf.x1mg3h75.x1lliihq.x1iyjqo2.xs83m0k.xz65tgg.x1rife3k.x1n2onr6",
+            "div[role='dialog']",
             "a[href^='/'][role='link']"
           );
         } catch (e) {

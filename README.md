@@ -14,18 +14,18 @@ Analyze your Instagram followers and following lists using either a CLI bot (Pyt
 
 ### Requirements
 - Python 3.8+
-- Brave browser
+- Brave or any browser
 - ChromeDriver (matching your Brave/Chrome version)
 - Selenium (`pip install selenium`)
 
 ### Setup
-1. Install Brave browser and ChromeDriver.
+1. Install browser and ChromeDriver.
 2. Clone this repository.
 3. Install Python dependencies:
    ```bash
    pip install selenium
    ```
-4. Ensure `brave_profile/` exists in the project root (used for browser session).
+4. Ensure `brave_profile/` (or your specific browser_profile) exists in the project root (used for browser session).
 
 ### Usage
 1. Edit `instagram_bot.py` to set your username and any options.

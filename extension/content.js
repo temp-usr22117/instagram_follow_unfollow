@@ -38,6 +38,9 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       function getScrollableListContainer(dialog) {
         if (!dialog) return null;
 
+        const explicitScroller = dialog.querySelector("div.x1lliihq.x1iyjqo2");
+        if (explicitScroller) return explicitScroller;
+
         const candidates = [dialog, ...Array.from(dialog.querySelectorAll("*"))];
         return candidates.find((element) => {
           const style = window.getComputedStyle(element);

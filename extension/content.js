@@ -21,6 +21,19 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         return document.querySelector("div[role='dialog']") || document.querySelector("div.x1lliihq.x1iyjqo2");
       }
 
+      function getScrollableListContainer(dialog) {
+        if (!dialog) return null;
+
+        const candidates = [dialog, ...Array.from(dialog.querySelectorAll("*"))];
+        return candidates.find((element) => {
+          const style = window.getComputedStyle(element);
+          return (
+            element.scrollHeight > element.clientHeight + 20 &&
+            (style.overflowY === 'auto' || style.overflowY === 'scroll')
+          );
+        }) || dialog;
+      }
+
       async function waitForDialogToClose(timeout = 10000) {
         const start = Date.now();
         return new Promise((resolve) => {
@@ -35,17 +48,19 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       }
       async function cliScrollAndScrape(dialogSelector, userSelector) {
         const dialog = await waitForSelector(dialogSelector);
+        const scroller = getScrollableListContainer(dialog);
         let usernames = new Set();
         let consecutive_scrolls_with_no_new_users = 0;
         let max_scrolls = 50;
         let scroll_count = 0;
         let lastCount = 0;
         function collectUsernames() {
-          let current_elements = Array.from(document.querySelectorAll(userSelector));
+          let current_elements = Array.from(dialog.querySelectorAll(userSelector));
           for (let el of current_elements) {
             let href = el.getAttribute("href");
             if (href) {
-              let username = href.endsWith("/") ? href.split("/")[1] : href.split("/")[1];
+              let path = href.split('?')[0].split('#')[0].replace(/^\/+|\/+$/g, '');
+              let username = path.split('/')[0];
               if (username && username !== 'verified') {
                 usernames.add(username.trim().toLowerCase());
               }
@@ -62,8 +77,8 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
               consecutive_scrolls_with_no_new_users = 0;
             }
             lastCount = currentCount;
-            dialog.scrollTop = dialog.scrollHeight;
-            dialog.dispatchEvent(new Event('scroll'));
+            scroller.scrollTop = scroller.scrollHeight;
+            scroller.dispatchEvent(new Event('scroll', { bubbles: true }));
             scroll_count++;
             if (consecutive_scrolls_with_no_new_users < 3 && scroll_count < max_scrolls) {
               setTimeout(scrollAndCollect, 2000); // Wait 2s for new users to load (matches CLI bot)

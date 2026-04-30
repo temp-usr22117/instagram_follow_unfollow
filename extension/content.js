@@ -24,17 +24,21 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       function getScrollableListContainer(dialog) {
         if (!dialog) return null;
 
-        const explicitScroller = dialog.querySelector("div.x1lliihq.x1iyjqo2");
-        if (explicitScroller) return explicitScroller;
-
         const candidates = [dialog, ...Array.from(dialog.querySelectorAll("*"))];
-        return candidates.find((element) => {
+        const exactScroller = candidates.find((element) => {
           const style = window.getComputedStyle(element);
           return (
             element.scrollHeight > element.clientHeight + 20 &&
             (style.overflowY === 'auto' || style.overflowY === 'scroll')
           );
-        }) || dialog;
+        });
+
+        if (exactScroller) return exactScroller;
+
+        const explicitScroller = dialog.querySelector("div.x1lliihq.x1iyjqo2");
+        if (explicitScroller) return explicitScroller;
+
+        return dialog;
       }
 
       async function waitForDialogToClose(timeout = 10000) {
@@ -51,7 +55,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       }
       async function cliScrollAndScrape(dialogSelector, userSelector) {
         const dialog = await waitForSelector(dialogSelector);
-        const scroller = getScrollableListContainer(dialog);
         let usernames = new Set();
         let consecutive_scrolls_with_no_new_users = 0;
         let max_scrolls = 50;
@@ -74,6 +77,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         }
         return new Promise((resolve) => {
           function scrollAndCollect() {
+            const scroller = getScrollableListContainer(dialog);
             collectUsernames();
             let currentCount = usernames.size;
             if (currentCount === lastCount) {

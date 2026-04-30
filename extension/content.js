@@ -21,20 +21,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         return document.querySelector("div[role='dialog']") || document.querySelector("div.x1lliihq.x1iyjqo2");
       }
 
-      function getDialogTitle(dialog) {
-        if (!dialog) return '';
-        const heading = dialog.querySelector('h1, h2, h3');
-        return (heading && heading.textContent ? heading.textContent.trim().toLowerCase() : '');
-      }
-
-      function getVisibleUserLinks(dialog, userSelector) {
-        if (!dialog) return [];
-        return Array.from(dialog.querySelectorAll(userSelector)).filter((element) => {
-          const rect = element.getBoundingClientRect();
-          return rect.width > 0 && rect.height > 0;
-        });
-      }
-
       function getScrollableListContainer(dialog) {
         if (!dialog) return null;
 
@@ -63,7 +49,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
           poll();
         });
       }
-      async function cliScrollAndScrape(dialogSelector, userSelector, expectedTitle = '') {
+      async function cliScrollAndScrape(dialogSelector, userSelector) {
         const dialog = await waitForSelector(dialogSelector);
         const scroller = getScrollableListContainer(dialog);
         let usernames = new Set();
@@ -72,18 +58,8 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         let scroll_count = 0;
         let lastCount = 0;
 
-        const waitStart = Date.now();
-        while (Date.now() - waitStart < 10000) {
-          const title = getDialogTitle(dialog);
-          const visibleLinks = getVisibleUserLinks(dialog, userSelector);
-          if ((!expectedTitle || title.includes(expectedTitle)) && visibleLinks.length > 0) {
-            break;
-          }
-          await new Promise((resolve) => setTimeout(resolve, 250));
-        }
-
         function collectUsernames() {
-          let current_elements = getVisibleUserLinks(dialog, userSelector);
+          let current_elements = Array.from(dialog.querySelectorAll(userSelector));
           for (let el of current_elements) {
             let href = el.getAttribute("href");
             if (href) {
@@ -119,13 +95,12 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         });
       }
       async function clickAndScrape(linkSelector, dialogSelector, userSelector) {
-        const expectedTitle = linkSelector.includes('/followers/') ? 'followers' : 'following';
         // Wait for link and click
         const link = await waitForSelector(linkSelector, 15000);
         link.click();
         await waitForSelector(dialogSelector, 15000);
         await new Promise(r => setTimeout(r, 1000));
-        const users = await cliScrollAndScrape(dialogSelector, userSelector, expectedTitle);
+        const users = await cliScrollAndScrape(dialogSelector, userSelector);
         // Try to close dialog
         let closed = false;
         try {

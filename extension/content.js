@@ -57,6 +57,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         let max_scrolls = 50;
         let scroll_count = 0;
         let lastCount = 0;
+        const scrollDelayMs = 7000;
 
         function collectUsernames() {
           let current_elements = Array.from(dialog.querySelectorAll(userSelector));
@@ -85,7 +86,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
             scroller.dispatchEvent(new Event('scroll', { bubbles: true }));
             scroll_count++;
             if (consecutive_scrolls_with_no_new_users < 3 && scroll_count < max_scrolls) {
-              setTimeout(scrollAndCollect, 2000); // Wait 2s for new users to load (matches CLI bot)
+              setTimeout(scrollAndCollect, scrollDelayMs); // Match the slower, proven CLI timing
             } else {
               collectUsernames();
               resolve(Array.from(usernames));
@@ -99,7 +100,7 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         const link = await waitForSelector(linkSelector, 15000);
         link.click();
         await waitForSelector(dialogSelector, 15000);
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 3000));
         const users = await cliScrollAndScrape(dialogSelector, userSelector);
         // Try to close dialog
         let closed = false;

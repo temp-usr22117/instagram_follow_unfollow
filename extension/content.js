@@ -22,24 +22,20 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       }
 
       function getScrollableListContainer(dialog) {
-        if (!dialog) return null;
+  if (!dialog) return null;
 
-        const candidates = [dialog, ...Array.from(dialog.querySelectorAll("*"))];
-        const exactScroller = candidates.find((element) => {
-          const style = window.getComputedStyle(element);
-          return (
-            element.scrollHeight > element.clientHeight + 20 &&
-            (style.overflowY === 'auto' || style.overflowY === 'scroll')
-          );
-        });
+  const explicitScroller = dialog.querySelector("div.x1lliihq.x1iyjqo2");
+  if (explicitScroller) return explicitScroller;
 
-        if (exactScroller) return exactScroller;
-
-        const explicitScroller = dialog.querySelector("div.x1lliihq.x1iyjqo2");
-        if (explicitScroller) return explicitScroller;
-
-        return dialog;
-      }
+  const candidates = [dialog, ...Array.from(dialog.querySelectorAll("*"))];
+  return candidates.find((element) => {
+    const style = window.getComputedStyle(element);
+    return (
+      element.scrollHeight > element.clientHeight + 20 &&
+      (style.overflowY === 'auto' || style.overflowY === 'scroll')
+    );
+  }) || dialog;
+}
 
       async function waitForDialogToClose(timeout = 10000) {
         const start = Date.now();

@@ -55,6 +55,10 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       }
       async function cliScrollAndScrape(dialogSelector, userSelector) {
         const dialog = await waitForSelector(dialogSelector);
+        const scroller = getScrollableListContainer(dialog);
+        if (!scroller) {
+          return [];
+        }
         let usernames = new Set();
         let consecutive_scrolls_with_no_new_users = 0;
         let max_scrolls = 50;
@@ -77,7 +81,6 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         }
         return new Promise((resolve) => {
           function scrollAndCollect() {
-            const scroller = getScrollableListContainer(dialog);
             collectUsernames();
             let currentCount = usernames.size;
             if (currentCount === lastCount) {

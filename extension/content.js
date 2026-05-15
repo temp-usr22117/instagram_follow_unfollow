@@ -261,7 +261,16 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         result += '\nEveryone you follow also follows you back!';
       }
 
-      chrome.runtime.sendMessage({ action: 'showResults', result });
+      chrome.runtime.sendMessage({
+        action: 'showResults',
+        result,
+        analysis: {
+          username,
+          following,
+          followers,
+          nonFollowers
+        }
+      });
     }
 
     await run();

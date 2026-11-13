@@ -1,0 +1,10 @@
+[package]
+name = "follow-core"
+description = "Platform-independent logic for Follow Analyser: username parsing, list comparison, scan state machine, snapshots and CSV."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true

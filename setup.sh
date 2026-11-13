@@ -1,5 +1,5 @@
 #!/bin/bash
-# Setup script for Instagram Follower Analyzer
+# Setup script for the Instagram Follower Analyzer CLI bot.
 
 set -e
 
@@ -10,13 +10,13 @@ source venv/bin/activate
 # Install Python dependencies
 pip install -r requirements.txt
 
-# Install Chromium and Chromedriver (Linux only)
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    sudo apt update
-    sudo apt install -y chromium-browser chromium-chromedriver
-fi
-
 echo "Setup complete!"
-echo "To run the app:"
-echo "source venv/bin/activate && python webapp/app.py"
-echo "Then open http://127.0.0.1:5000/ in your browser."
+echo
+echo "The bot uses Brave at /usr/bin/brave-browser (set BRAVE_PATH to change it),"
+echo "or Google Chrome/Chromium if Brave isn't found. A matching ChromeDriver is"
+echo "downloaded automatically by Selenium unless ./chromedriver exists."
+echo
+echo "To run the bot:"
+echo "  source venv/bin/activate"
+echo "  python first_time_login.py   # once, to log in and save the session"
+echo "  python instagram_bot.py"

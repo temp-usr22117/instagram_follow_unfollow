@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Instagram Follower/Following Analyzer",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Analyze followers and following lists directly on Instagram.",
-  "permissions": ["scripting", "activeTab", "storage", "tabs", "runtime"],
+  "permissions": ["scripting", "activeTab", "storage"],
   "host_permissions": ["https://www.instagram.com/*"],
   "action": {
     "default_popup": "popup.html",
@@ -12,9 +12,6 @@
       "48": "icon48.png",
       "128": "icon128.png"
     }
-  },
-  "background": {
-    "service_worker": "background.js"
   },
   "content_scripts": [
     {

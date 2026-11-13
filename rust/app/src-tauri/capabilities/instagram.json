@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "instagram-scraper",
+  "description": "The Instagram window. Instagram's own scripts run on these pages too, so they get only the four scan commands, which accept nothing but usernames, counts and the page URL.",
+  "windows": ["instagram"],
+  "remote": {
+    "urls": ["https://www.instagram.com/*", "https://instagram.com/*"]
+  },
+  "permissions": [
+    "allow-scan-next",
+    "allow-scan-progress",
+    "allow-scan-report",
+    "allow-scan-error"
+  ]
+}

@@ -1,15 +1,19 @@
-// Use window.chrome or browser for storage API
-const storage = (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local)
-  ? chrome.storage.local
-  : (typeof browser !== 'undefined' && browser.storage && browser.storage.local)
-    ? browser.storage.local
-    : null;
+// The popup only starts a scan and shows what content.js has saved in
+// chrome.storage.local. The scan itself runs in the Instagram tab, so this
+// popup can be closed and reopened at any time.
 
-let latestAnalysis = null;
+// A running scan updates its status every few seconds. If the newest update
+// is older than this, the tab was closed or reloaded mid-scan.
+const STALE_AFTER_MS = 90 * 1000;
+
+const storage = chrome.storage.local;
 
 const btn = document.getElementById('scrapeAnalyzeBtn');
 const downloadBtn = document.getElementById('downloadCsvBtn');
+const statusDiv = document.getElementById('status');
 const resultsDiv = document.getElementById('results');
+
+let latestAnalysis = null;
 
 function toCsvRow(values) {
   return values
@@ -48,7 +52,7 @@ function downloadCsv(analysis) {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
 
-  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const stamp = new Date(analysis.scannedAt || Date.now()).toISOString().replace(/[:.]/g, '-');
   const safeUsername = (analysis.username || 'instagram').replace(/[^a-zA-Z0-9_-]/g, '_');
   const filename = `${safeUsername}_followers_following_${stamp}.csv`;
 
@@ -62,52 +66,96 @@ function downloadCsv(analysis) {
   URL.revokeObjectURL(url);
 }
 
-function sendScrapeMessage(tabId) {
-  chrome.tabs.sendMessage(tabId, {action: 'scrapeAndAnalyze'}, (response) => {
+function isRunning(status) {
+  return Boolean(status && status.state === 'running' && Date.now() - status.updatedAt < STALE_AFTER_MS);
+}
+
+function renderStatus(status) {
+  btn.disabled = isRunning(status);
+  if (!status) {
+    statusDiv.textContent = '';
+    return;
+  }
+  if (isRunning(status)) {
+    const of = status.expected ? ` of ${status.expected}` : '';
+    statusDiv.textContent =
+      `Scanning ${status.list} list: ${status.count || 0}${of} found…\n` +
+      "You can close this popup; keep the Instagram tab open and don't click in it.";
+  } else if (status.state === 'running') {
+    statusDiv.textContent = 'The last scan stopped before finishing (the tab was closed or reloaded). Start it again.';
+  } else if (status.state === 'error') {
+    statusDiv.textContent = status.message || 'The scan failed.';
+  } else if (status.state === 'done') {
+    statusDiv.textContent = `Last scan: ${new Date(status.updatedAt).toLocaleString()}`;
+  } else {
+    statusDiv.textContent = '';
+  }
+}
+
+function renderResults(text, analysis) {
+  resultsDiv.textContent = text || '';
+  latestAnalysis = analysis || null;
+  downloadBtn.disabled = !latestAnalysis;
+}
+
+function startScan(tabId) {
+  chrome.tabs.sendMessage(tabId, { action: 'scrapeAndAnalyze' }, (response) => {
     if (chrome.runtime.lastError) {
-      // Content script not injected, so inject it and retry
-      chrome.scripting.executeScript({
-        target: {tabId: tabId},
-        files: ['content.js']
-      }, () => {
-        chrome.tabs.sendMessage(tabId, {action: 'scrapeAndAnalyze'});
+      // The content script isn't in this tab yet (e.g. the tab was open
+      // before the extension was installed): inject it and try again.
+      chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] }, () => {
+        if (chrome.runtime.lastError) {
+          statusDiv.textContent = 'Open your Instagram profile page in this tab first.';
+          btn.disabled = false;
+          return;
+        }
+        chrome.tabs.sendMessage(tabId, { action: 'scrapeAndAnalyze' }, () => {
+          if (chrome.runtime.lastError) {
+            // Usually a stale copy left over from before the extension was reloaded.
+            statusDiv.textContent = 'Reload the Instagram tab and try again.';
+            btn.disabled = false;
+          }
+        });
       });
+      return;
+    }
+    if (response && response.status === 'busy') {
+      statusDiv.textContent = 'A scan is already running in this tab.';
     }
   });
 }
 
-btn.addEventListener('click', async () => {
-  document.getElementById('results').innerText = 'Navigating and scraping...';
-  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    sendScrapeMessage(tabs[0].id);
+btn.addEventListener('click', () => {
+  btn.disabled = true;
+  statusDiv.textContent = 'Starting…';
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tab = tabs && tabs[0];
+    if (!tab) {
+      statusDiv.textContent = 'No active tab found.';
+      btn.disabled = false;
+      return;
+    }
+    startScan(tab.id);
   });
 });
 
 downloadBtn.addEventListener('click', () => {
-  if (!latestAnalysis) {
-    return;
-  }
-  downloadCsv(latestAnalysis);
+  if (latestAnalysis) downloadCsv(latestAnalysis);
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === 'showResults') {
-    document.getElementById('results').innerText = message.result;
-    if (message.analysis) {
-      latestAnalysis = message.analysis;
-      downloadBtn.disabled = false;
-      if (storage) {
-        storage.set({ latestAnalysis });
-      }
-    }
+// Live updates while the popup is open.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local') return;
+  if (changes.scanStatus) renderStatus(changes.scanStatus.newValue);
+  if (changes.latestResultText || changes.latestAnalysis) {
+    storage.get(['latestResultText', 'latestAnalysis'], (data) => {
+      renderResults(data.latestResultText, data.latestAnalysis);
+    });
   }
 });
 
-if (storage) {
-  storage.get(['latestAnalysis'], (data) => {
-    if (data.latestAnalysis) {
-      latestAnalysis = data.latestAnalysis;
-      downloadBtn.disabled = false;
-    }
-  });
-}
+// Show whatever was saved, including a scan that finished while the popup was closed.
+storage.get(['scanStatus', 'latestResultText', 'latestAnalysis'], (data) => {
+  renderStatus(data.scanStatus);
+  renderResults(data.latestResultText, data.latestAnalysis);
+});

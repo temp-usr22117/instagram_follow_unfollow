@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Follow Analyser</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <h1>Follow Analyser</h1>
+      <p class="sub">See who doesn't follow you back on Instagram. Everything stays on this device.</p>
+    </header>
+
+    <section class="card" aria-labelledby="scan-title">
+      <h2 id="scan-title" class="visually-hidden">Scan</h2>
+      <form id="scan-form" class="scan-row">
+        <label class="field">
+          <span class="field-label">Your Instagram username</span>
+          <span class="input-wrap">
+            <span class="at" aria-hidden="true">@</span>
+            <input id="username" name="username" autocomplete="off" autocapitalize="off" spellcheck="false"
+                   maxlength="31" placeholder="username" required>
+          </span>
+        </label>
+        <button id="start" type="submit" class="btn primary">Start scan</button>
+        <button id="cancel" type="button" class="btn" hidden>Cancel</button>
+      </form>
+      <div id="status" class="status" role="status" aria-live="polite">
+        An Instagram window will open. Log in there if asked; the scan then runs by itself.
+      </div>
+    </section>
+
+    <section id="results" class="results" hidden aria-labelledby="results-title">
+      <div class="results-head">
+        <div>
+          <h2 id="results-title">Results for <span id="r-user"></span></h2>
+          <p id="r-when" class="muted"></p>
+        </div>
+        <button id="save-csv" type="button" class="btn">Save CSV</button>
+      </div>
+      <p id="r-warning" class="warning" hidden></p>
+      <p id="csv-saved" class="muted small" hidden></p>
+
+      <div class="tiles">
+        <div class="tile"><span class="tile-label">Following</span><span id="t-following" class="tile-value"></span></div>
+        <div class="tile"><span class="tile-label">Followers</span><span id="t-followers" class="tile-value"></span></div>
+        <div class="tile accent"><span class="tile-label">Don't follow you back</span><span id="t-nfb" class="tile-value"></span></div>
+        <div class="tile"><span class="tile-label">You don't follow back</span><span id="t-fans" class="tile-value"></span></div>
+        <div class="tile"><span class="tile-label">Mutual</span><span id="t-mutual" class="tile-value"></span></div>
+      </div>
+
+      <p id="changes-note" class="muted small" hidden></p>
+
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="list-tools">
+        <input id="filter" type="search" placeholder="Filter usernames" autocomplete="off" spellcheck="false">
+        <span id="list-count" class="muted small"></span>
+      </div>
+      <ul id="list" class="user-list"></ul>
+      <p id="list-empty" class="muted empty" hidden>Nobody here.</p>
+    </section>
+  </main>
+  <script src="main.js"></script>
+</body>
+</html>

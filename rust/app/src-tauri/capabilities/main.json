@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "The app's own window: start and stop scans, read results, save CSV.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "allow-start-scan",
+    "allow-cancel-scan",
+    "allow-get-status",
+    "allow-latest-report",
+    "allow-save-csv"
+  ]
+}
